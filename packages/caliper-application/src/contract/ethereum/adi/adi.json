@@ -1,0 +1,67 @@
+{
+    "name": "adi",
+    "abi": [{ "constant": false,
+        "inputs": [],
+        "name": "kill",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }, {
+        "constant": true,
+        "inputs": [],
+        "name": "owner",
+        "outputs": [{
+          "name": "",
+          "type": "address"
+        }],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      }, {
+        "constant": false,
+        "inputs": [{
+          "name": "bucket",
+          "type": "string"
+        }, {
+          "name": "index",
+          "type": "string"
+        }, {
+          "name": "hash",
+          "type": "string"
+        }],
+        "name": "submitHash",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }, {
+        "inputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      }, {
+        "anonymous": false,
+        "inputs": [{
+          "indexed": true,
+          "name": "owner",
+          "type": "address"
+        }, {
+          "indexed": true,
+          "name": "index",
+          "type": "string"
+        }, {
+          "indexed": false,
+          "name": "bucket",
+          "type": "string"
+        }, {
+          "indexed": false,
+          "name": "hash",
+          "type": "string"
+        }],
+        "name": "HashSubmitted",
+        "type": "event"
+      }],
+      "bytecode": "0x608060405234801561001057600080fd5b5060008054600160a060020a03191633179055610383806100326000396000f3006080604052600436106100565763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166341c0e1b5811461005b5780638da5cb5b14610072578063d77e4f53146100b0575b600080fd5b34801561006757600080fd5b50610070610185565b005b34801561007e57600080fd5b506100876101c2565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b3480156100bc57600080fd5b506040805160206004803580820135601f810184900484028501840190955284845261007094369492936024939284019190819084018382808284375050604080516020601f89358b018035918201839004830284018301909452808352979a99988101979196509182019450925082915084018382808284375050604080516020601f89358b018035918201839004830284018301909452808352979a9998810197919650918201945092508291508401838280828437509497506101de9650505050505050565b60005473ffffffffffffffffffffffffffffffffffffffff163314156101c05760005473ffffffffffffffffffffffffffffffffffffffff16ff5b565b60005473ffffffffffffffffffffffffffffffffffffffff1681565b816040518082805190602001908083835b6020831061020e5780518252601f1990920191602091820191016101ef565b6001836020036101000a03801982511681845116808217855250505050505090500191505060405180910390203373ffffffffffffffffffffffffffffffffffffffff167fe49e538d170aeedc91a575dd5f68b91b2dcfc693113ea63a71fcc338c50e7d748584604051808060200180602001838103835285818151815260200191508051906020019080838360005b838110156102b657818101518382015260200161029e565b50505050905090810190601f1680156102e35780820380516001836020036101000a031916815260200191505b50838103825284518152845160209182019186019080838360005b838110156103165781810151838201526020016102fe565b50505050905090810190601f1680156103435780820380516001836020036101000a031916815260200191505b5094505050505060405180910390a35050505600a165627a7a723058202a9c96d043cdd62c8d5a8499427ea17295e709ecc72da265af7feb69c3e0b0c20029",
+      "gas": 500000
+}

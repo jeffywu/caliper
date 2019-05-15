@@ -59,7 +59,8 @@
       {"id": "drm", "path": "contract/fabric/drm", "language":"golang", "version": "v0", "channel": "mychannel"},
       {"id": "marbles", "path": "contract/fabric/marbles/go", "language":"golang", "version": "v1", "channel": "mychannel", "metadataPath": "src/contract/fabric/marbles/go/metadata"},
       {"id": "simple", "path": "contract/fabric/simple/go", "language":"golang", "version": "v0", "channel": "mychannel"},
-      {"id": "smallbank", "path": "contract/fabric/smallbank", "language":"golang", "version": "v0", "channel": "mychannel"}
+      {"id": "smallbank", "path": "contract/fabric/smallbank", "language":"golang", "version": "v0", "channel": "mychannel"},
+      {"id": "adi", "path": "contract/fabric/adi", "language":"golang", "version": "v0", "channel": "mychannel"}
     ],
     "endorsement-policy": {
       "identities": [
@@ -89,7 +90,8 @@
       "init": "mychannel",
       "open": "mychannel",
       "publish": "mychannel",
-      "query": "mychannel"
+      "query": "mychannel",
+      "write": "mychannel"
     }
   },
   "info" : {

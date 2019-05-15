@@ -20,6 +20,9 @@
         "contracts": {
             "simple": {
                 "path": "src/contract/ethereum/simple/simple.json"
+            },
+            "adi": {
+                "path": "src/contract/ethereum/adi/adi.json"
             }
         }
     }
