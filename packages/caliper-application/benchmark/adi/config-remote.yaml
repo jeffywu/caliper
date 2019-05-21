@@ -1,0 +1,30 @@
+---
+test:
+  name: adi
+  description: Tests advanced data integrity using caliper.
+  clients:
+    type: local
+    number: 1
+  rounds:
+  - label: write 
+    txNumber:
+    - 500
+    rateControl:
+    - type: fixed-rate
+      opts:
+        tps: 30
+    arguments:
+      numIndexes: 1
+    callback: benchmark/adi/write.js
+monitor:
+  type:
+  - process
+  - docker
+  process:
+  - command: node
+    arguments: local-client.js
+    multiOutput: avg
+  docker:
+    name:
+    - all
+  interval: 1

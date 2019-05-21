@@ -21,8 +21,8 @@
     "src/comm/template/report.html"
   ],
   "dependencies": {
-    "caliper-core" : "0.1.0",
-    "web3": ">=1.0.0-beta.54"
+    "caliper-core": "0.1.0",
+    "web3": "<=1.0.0-beta.37"
   },
   "devDependencies": {
     "chai": "^3.5.0",

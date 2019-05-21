@@ -31,6 +31,11 @@ class Ethereum extends BlockchainInterface {
         let registryData = require(CaliperUtils.resolvePath(this.ethereumConfig.registry.path, workspace_root))
         this.web3 = new Web3(this.ethereumConfig.url);
         this.web3.transactionConfirmationBlocks = this.ethereumConfig.transactionConfirmationBlocks;
+
+        // Unlock and add private keys
+        let contractDeployerPK = JSON.parse(fs.readFileSync(CaliperUtils.resolvePath(this.ethereumConfig.contractDeployerPrivateKeyFile, workspace_root)).toString())
+        this.web3.eth.accounts.wallet.decrypt([contractDeployerPK], this.ethereumConfig.contractDeployerAddressPassword)
+
         this.registry = new this.web3.eth.Contract(registryData.abi, this.ethereumConfig.registry.address);
     }
 
@@ -39,7 +44,7 @@ class Ethereum extends BlockchainInterface {
      * @return {object} Promise<boolean> True if the account got unlocked successful otherwise false.
      */
     init() {
-        return this.web3.eth.personal.unlockAccount(this.ethereumConfig.contractDeployerAddress, this.ethereumConfig.contractDeployerAddressPassword, 1000)
+        return true;
     }
 
     /**
@@ -50,14 +55,21 @@ class Ethereum extends BlockchainInterface {
         let promises = [];
         let self = this;
         for (const key of Object.keys(this.ethereumConfig.contracts)) {
-            let contractData = require(CaliperUtils.resolvePath(this.ethereumConfig.contracts[key].path, this.workspaceRoot)); // TODO remove path property
-            promises.push(new Promise(function(resolve, reject) {
-                self.deployContract(contractData).then((contractInstance) => {
-                    self.bindContract(key, contractInstance.address).then((receipt) => {
-                        resolve()
+            // Skip deployment if there's already a contract deployed.
+            let address = await self.lookupContract(key);
+            let forceDeploy = this.ethereumConfig.contracts[key].forceDeploy || false;
+            if (address && !forceDeploy) {
+                logger.info(`Not deploying, contract ${key} already deployed at ${address}.`)
+            } else {
+                let contractData = require(CaliperUtils.resolvePath(this.ethereumConfig.contracts[key].path, this.workspaceRoot)); // TODO remove path property
+                promises.push(new Promise(function(resolve, reject) {
+                    self.deployContract(contractData).then((contractInstance) => {
+                        self.bindContract(key, contractInstance.options.address).then((receipt) => {
+                            resolve()
+                        })
                     })
-                })
-            }));
+                }));
+            }
         }
         return Promise.all(promises);
     }
@@ -73,8 +85,14 @@ class Ethereum extends BlockchainInterface {
         let context = {fromAddress: this.ethereumConfig.fromAddress};
         context.web3 = new Web3(this.ethereumConfig.url);
         context.web3.transactionConfirmationBlocks = this.ethereumConfig.transactionConfirmationBlocks;
+        context.gasPrice = await context.web3.eth.getGasPrice();
         context.contracts = {};
-        await context.web3.eth.personal.unlockAccount(this.ethereumConfig.fromAddress, this.ethereumConfig.fromAddressPassword, 1000)
+
+        // Each of these addresses should be preloaded with ether.
+        let fromAddressPK = JSON.parse(fs.readFileSync(CaliperUtils.resolvePath(this.ethereumConfig.fromAddressPrivateKeyFile, this.workspaceRoot)).toString())
+        context.web3.eth.accounts.wallet.decrypt(fromAddressPK, this.ethereumConfig.fromAddressPassword)
+        context.txnCounter = 0;
+        context.totalAddresses = context.web3.eth.accounts.wallet.length;
         for (const key of Object.keys(this.ethereumConfig.contracts)) {
             let contractData = require(CaliperUtils.resolvePath(this.ethereumConfig.contracts[key].path, this.workspaceRoot)); // TODO remove path property
             let contractAddress = await this.lookupContract(key);
@@ -104,7 +122,11 @@ class Ethereum extends BlockchainInterface {
     async invokeSmartContract(context, contractID, contractVer, args, timeout) {
         let promises = [];
         args.forEach((item, index) => {
-            promises.push(this.sendTransaction(context, contractID, contractVer, item, 100));
+            // NOTE: if there aren't enough addresses here will run into nonce issues.
+            // TODO: running in multiple clients, we'll need multiple files or some way to partition the wallets
+            let fromAddress = context.web3.eth.accounts.wallet[context.txnCounter % context.totalAddresses].address;
+            context.txnCounter++;
+            promises.push(this.sendTransaction(context, contractID, contractVer, item, 100, fromAddress));
         });
         return Promise.all(promises);
     }
@@ -118,13 +140,28 @@ class Ethereum extends BlockchainInterface {
      * @param {Number} timeout Request timeout, in seconds.
      * @return {Promise<TxStatus>} Result and stats of the transaction invocation.
      */
-    async sendTransaction(context, contractID, contractVer, args, timeout) {
+    async sendTransaction(context, contractID, contractVer, args, timeout, fromAddress) {
         let verb = args.verb;
         delete args.verb
         let status = new TxStatus();
         try {
             context.engine.submitCallback(1);
-            let receipt = await context.contracts[contractID].methods[verb](...Object.values(args)).send({from: context.fromAddress});
+            let txn = context.contracts[contractID].methods[verb](...Object.values(args)).encodeABI();
+            let nonce = await context.web3.eth.getTransactionCount(fromAddress)
+            logger.debug(`Sending txn from ${fromAddress}, to contract ${context.contracts[contractID].options.address} with nonce ${nonce}.`)
+
+            let receipt = await context.web3.eth.sendTransaction({
+                from: fromAddress,
+                to: context.contracts[contractID].options.address,
+                gas: 60000, // TODO: needs to be configured.
+                gasPrice: context.gasPrice,
+                data: txn,
+            }).on("error", (err) => { 
+                console.log(err);
+                status.SetStatusFail();
+                logger.error(`Failed TX`);
+            });
+
             status.SetID(receipt.transactionHash);
             status.SetResult(receipt);
             status.SetVerification(true);
@@ -190,7 +227,13 @@ class Ethereum extends BlockchainInterface {
      * @param {string} address deployed contract address
      */
     bindContract(label, address) {
-        return this.registry.methods.bind(label, address).send({from: this.ethereumConfig.contractDeployerAddress});
+        return this.registry.methods
+                   .bind(label, this.web3.utils.toChecksumAddress(address))
+                   .send({gas: 1000000, from: this.ethereumConfig.contractDeployerAddress})
+                   .on("error", (err, receipt) => {
+                       console.log(`Error ${err}, ${JSON.stringify(receipt)}`)
+                       reject(err);
+                   });
     }
 
     /**
