@@ -22,13 +22,16 @@ deployRegistry = function () {
           data: contractData.bytecode
       });
       contractDeploy.send({
-          from: web3.eth.accounts.wallet[0].address,
-          gas: contractData.gas
+        from: web3.eth.accounts.wallet[0].address,
+        gas: contractData.gas,
+      }).on('receipt', (receipt) => {
+        console.log(receipt);
       }).on('error', (error) => {
-          reject(error);
+        console.log(error)
+        reject(error);
       }).then((newContractInstance) => {
-          console.log("Deployed contract " + contractData.name + " at " + newContractInstance.options.address);
-          resolve(newContractInstance);
+        console.log("Deployed contract " + contractData.name + " at " + newContractInstance.options.address);
+        resolve(newContractInstance);
       });
   });
 }
@@ -40,7 +43,7 @@ deployRegistry = function () {
  * @param {object} donor private key of donor to get ether from
  * @param {string} keyfile path to keyfile to save to.
  */
-createAccounts = async function (numAccounts, minEther, keyfile, topUp = false) {
+createAccounts = async function (numAccounts, minEther, keyfile, parallelism) {
   let web3 = new Web3(Web3.givenProvider || ethereumConfig.url);
   let minWei = web3.utils.toWei(minEther, "ether");
 
@@ -49,6 +52,7 @@ createAccounts = async function (numAccounts, minEther, keyfile, topUp = false) 
   web3.eth.accounts.wallet.decrypt([contractDeployerPK], ethereumConfig.contractDeployerAddressPassword);
   let donor = web3.eth.accounts.wallet[0].address;
 
+  // Create extra accounts if required.
   if (fs.existsSync(keyfile)) {
     let fromAddressPK = JSON.parse(fs.readFileSync(keyfile).toString());
     web3.eth.accounts.wallet.decrypt(fromAddressPK, ethereumConfig.fromAddressPassword)
@@ -59,23 +63,33 @@ createAccounts = async function (numAccounts, minEther, keyfile, topUp = false) 
     web3.eth.accounts.wallet.create(numAccounts);
   }
 
-  for (let i = 1; i <= numAccounts; i++) {
-    await web3.eth.sendTransaction({
-        to: web3.eth.accounts.wallet[i].address,
-        from: donor,
-        value: minWei,
-        gas: 22000
-    });
-    let balance = await web3.eth.getBalance(web3.eth.accounts.wallet[i].address);
-    console.log(`Transaction #${i} to ${web3.eth.accounts.wallet[i].address} from ${donor}, balance is ${balance} wei`);
+  try {
+    for (let i = 1; i <= numAccounts; i++) {
+      let balance = await web3.eth.getBalance(web3.eth.accounts.wallet[i].address);
+      balance = parseInt(balance);
+      if (balance < minWei) {
+        try {
+          await web3.eth.sendTransaction({
+              to: web3.eth.accounts.wallet[i].address,
+              from: donor,
+              value: minWei,
+              gas: 22000
+          });
+        } catch (err) {
+          console.log(err);
+        }
+        balance = await web3.eth.getBalance(web3.eth.accounts.wallet[i].address);
+      }
+      console.log(`Account #${i} at ${web3.eth.accounts.wallet[i].address}, balance is ${balance} wei`);
+    }
+  } catch (err) {
+    console.log(`Error: ${err}`)
+  } finally {
+    web3.eth.accounts.wallet.remove(0);
+    let wallet = web3.eth.accounts.wallet.encrypt(ethereumConfig.fromAddressPassword);
+    fs.writeFileSync(keyfile, JSON.stringify(wallet));
   }
-  
-  web3.eth.accounts.wallet.remove(0);
-  let wallet = web3.eth.accounts.wallet.encrypt(ethereumConfig.fromAddressPassword);
-  fs.writeFileSync(keyfile, JSON.stringify(wallet));
 }
 
-// TODO: have this append to the file if it exists.
-createAccounts(500, "0.001", "keys/fromAccounts", false)
-
-// deployContract();
+// deployRegistry();
+createAccounts(1000, "0.001", "keys/fromAccounts", 5)
