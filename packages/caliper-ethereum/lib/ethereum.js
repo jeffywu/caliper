@@ -23,9 +23,12 @@ class Ethereum extends BlockchainInterface {
      * @param {string} config_path The path of the Burrow network configuration file.
      * @param {string} workspace_root The absolute path to the root location for the application configuration files.
      */
-    constructor(config_path, workspace_root) {
+    constructor(config_path, workspace_root, clientNum) {
         super(config_path);
         this.bcType = 'ethereum';
+        this.clientNum = clientNum;
+        this.totalClients = 2;
+        console.log(`CLIENT NUMBER: ${clientNum}`);
         this.workspaceRoot = workspace_root;
         this.ethereumConfig = require(config_path).ethereum;
         let registryData = require(CaliperUtils.resolvePath(this.ethereumConfig.registry.path, workspace_root))
@@ -92,7 +95,8 @@ class Ethereum extends BlockchainInterface {
         let fromAddressPK = JSON.parse(fs.readFileSync(CaliperUtils.resolvePath(this.ethereumConfig.fromAddressPrivateKeyFile, this.workspaceRoot)).toString())
         context.web3.eth.accounts.wallet.decrypt(fromAddressPK, this.ethereumConfig.fromAddressPassword)
         context.txnCounter = 0;
-        context.totalAddresses = context.web3.eth.accounts.wallet.length;
+        context.addressesAvailable = Math.floor(context.web3.eth.accounts.wallet.length / this.totalClients);
+        context.walletOffset = context.addressesAvailable * this.clientNum;
         for (const key of Object.keys(this.ethereumConfig.contracts)) {
             let contractData = require(CaliperUtils.resolvePath(this.ethereumConfig.contracts[key].path, this.workspaceRoot)); // TODO remove path property
             let contractAddress = await this.lookupContract(key);
@@ -124,7 +128,7 @@ class Ethereum extends BlockchainInterface {
         args.forEach((item, index) => {
             // NOTE: if there aren't enough addresses here will run into nonce issues.
             // TODO: running in multiple clients, we'll need multiple files or some way to partition the wallets
-            let fromAddress = context.web3.eth.accounts.wallet[context.txnCounter % context.totalAddresses].address;
+            let fromAddress = context.web3.eth.accounts.wallet[context.txnCounter % context.addressesAvailable + context.walletOffset].address;
             context.txnCounter++;
             promises.push(this.sendTransaction(context, contractID, contractVer, item, 100, fromAddress));
         });

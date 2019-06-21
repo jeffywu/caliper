@@ -62,25 +62,65 @@ createAccounts = async function (numAccounts, minEther, keyfile, parallelism) {
   } else {
     web3.eth.accounts.wallet.create(numAccounts);
   }
+ 
+  // Find accounts that need more ether
+  let topUp = []
+  for (let i = 1; i <= numAccounts; i++) {
+    let balance = await web3.eth.getBalance(web3.eth.accounts.wallet[i].address);
+    balance = parseInt(balance);
+    if (balance < (minWei * 0.80)) {
+      topUp.push(web3.eth.accounts.wallet[i].address);
+    }
+  }
+
+  if (topUp.length == 0) {
+    console.log("No transfers required, exiting");
+    return;
+  }
+
+  // Determine how many txns each parallel address will send.
+  // The first ${parallelism} accounts will be given (minWei + gas) * (txnsToSend + 1) ether.
+  // After they are confirmed, they will then loop over the indexes parallelism + (i * txnsToSend)
+  let txnsToSend = Math.ceil((topUp.length - parallelism) / parallelism);
+  let gasPrice = await web3.eth.getGasPrice();
+  let gasPerTxn = web3.utils.toBN(30000)
+  let gasFee = web3.utils.toBN(gasPrice).mul(gasPerTxn);
+  let initialValue = gasFee.add(web3.utils.toBN(minWei)).mul(web3.utils.toBN(txnsToSend + 1))
+
+  let balance = await web3.eth.getBalance(donor);
+  console.log(`Account at ${donor}, balance is ${balance} wei`);
 
   try {
-    for (let i = 1; i <= numAccounts; i++) {
-      let balance = await web3.eth.getBalance(web3.eth.accounts.wallet[i].address);
-      balance = parseInt(balance);
-      if (balance < minWei) {
-        try {
-          await web3.eth.sendTransaction({
-              to: web3.eth.accounts.wallet[i].address,
-              from: donor,
+    for (let i = 0; i < parallelism; i++) {
+      // This is annoying but for some reason sendTransaction doesn't find the account.
+      let txn = await web3.eth.accounts.wallet[0].signTransaction({
+        from: donor,
+        to: topUp[i],
+        value: initialValue,
+        gas: gasPerTxn,
+      });
+      
+      await web3.eth.sendSignedTransaction(txn.rawTransaction).on("receipt", async (receipt) => {
+        console.log(`Starting txns with ${receipt.to}`)
+        let startIndex = parallelism + (i * txnsToSend);
+        for (let j = startIndex; j < startIndex + txnsToSend && j < topUp.length; j++) {
+          try {
+            let balance = await web3.eth.getBalance(receipt.to);
+            console.log(`Attemting to send txn to ${topUp[j]} from ${receipt.to}`);
+            console.log(`Balance at ${receipt.to} is ${balance}`);
+            await web3.eth.sendTransaction({
+              from: receipt.to,
+              to: topUp[j],
               value: minWei,
-              gas: 22000
-          });
-        } catch (err) {
-          console.log(err);
+              gas: gasPerTxn
+            });
+          } catch (err) {
+            console.log(err);
+          }
+          let balance = await web3.eth.getBalance(topUp[j]);
+          console.log(`Account at ${topUp[j]}, balance is ${balance} wei`);
         }
-        balance = await web3.eth.getBalance(web3.eth.accounts.wallet[i].address);
-      }
-      console.log(`Account #${i} at ${web3.eth.accounts.wallet[i].address}, balance is ${balance} wei`);
+      })
     }
   } catch (err) {
     console.log(`Error: ${err}`)
@@ -92,4 +132,4 @@ createAccounts = async function (numAccounts, minEther, keyfile, parallelism) {
 }
 
 // deployRegistry();
-createAccounts(1000, "0.001", "keys/fromAccounts", 5)
+createAccounts(2000, "0.001", "keys/fromAccounts", 10)

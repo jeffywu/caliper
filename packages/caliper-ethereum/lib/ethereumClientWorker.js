@@ -24,7 +24,7 @@ process.on('message', async (message) => {
     try {
         switch (message.type) {
         case 'init': {
-            const blockchain = new EthereumClient(message.absNetworkFile, message.networkRoot);
+            const blockchain = new EthereumClient(message.absNetworkFile, message.networkRoot, message.clientNum);
             caliperClient = new CaliperLocalClient(blockchain);
             process.send({type: 'ready', data: {pid: process.pid, complete: true}});
             break;

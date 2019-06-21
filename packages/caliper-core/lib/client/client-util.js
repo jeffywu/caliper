@@ -61,9 +61,10 @@ function pushUpdate(pid, data) {
  * @param {Array} results array to save the test results
  * @param {Object} clientFactory a factory to spawn clients
  * @param {Array} readyPromises array to hold ready promises
+ * @param {Number} clientNum index of client
  */
-async function launchClient(updates, results, clientFactory, readyPromises) {
-    let client = await clientFactory.spawnWorker();
+async function launchClient(updates, results, clientFactory, readyPromises, clientNum = 0) {
+    let client = await clientFactory.spawnWorker(clientNum);
     let pid   = client.pid.toString();
     processes[pid] = {obj: client, results: results, updates: updates};
 
@@ -124,7 +125,8 @@ async function startTest(number, message, clientArgs, updates, results, clientFa
         // launch clients
         processes = {};
         for(let i = 0 ; i < number ; i++) {
-            launchClient(updates, results, clientFactory, readyPromises);
+            console.log(`LAUNCHING CLIENT ${i}`);
+            launchClient(updates, results, clientFactory, readyPromises, i);
         }
     }
 

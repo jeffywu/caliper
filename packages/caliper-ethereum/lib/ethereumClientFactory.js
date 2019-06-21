@@ -30,13 +30,14 @@ class EthereumClientFactory {
      * Spawn the worker and perform required init
      * @returns {Object} the child process
      */
-    async spawnWorker() {
+    async spawnWorker(clientNum) {
         const child = childProcess.fork(path.join(__dirname, './ethereumClientWorker.js'));
 
         const msg = {
             type: 'init',
             absNetworkFile: this.absNetworkFile,
-            networkRoot: this.workspaceRoot
+            networkRoot: this.workspaceRoot,
+            clientNum: clientNum
         };
         child.send(msg);
 

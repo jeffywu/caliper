@@ -4,11 +4,13 @@ test:
   description: Tests advanced data integrity using caliper.
   clients:
     type: local
-    number: 1
+    number: 2
   rounds:
   - label: write 
-    txNumber:
-    - 500
+    trim: 30
+    txDuration: 
+      - 200
+      - 200
     rateControl:
     - type: fixed-rate
       opts:
