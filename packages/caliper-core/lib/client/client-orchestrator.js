@@ -1,9 +1,16 @@
-/**
-* Copyright 2017 HUAWEI. All Rights Reserved.
-*
-* SPDX-License-Identifier: Apache-2.0
-*
-*/
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 
 'use strict';
@@ -134,12 +141,12 @@ class ClientOrchestrator {
     *            };
     * @param {JSON} message start message
     * @param {Array} clientArgs each element of the array contains arguments that should be passed to corresponding test client
-    * @param {function} finishCB callback after the test finished
+    * @param {Report} report the report being built
     * @param {any} finishArgs arguments that should be passed to finishCB, the callback is invoke as finishCB(this.results, finshArgs)
     * @param {Object} clientFactory a factor used to spawn test clients
     * @async
     */
-    async startTest(message, clientArgs, finishCB, finishArgs, clientFactory) {
+    async startTest(message, clientArgs, report, finishArgs, clientFactory) {
         this.results = [];
         this.updates.data = [];
         this.updates.id++;
@@ -155,7 +162,7 @@ class ClientOrchestrator {
             throw new Error(`Unknown client type: ${this.type}`);
         }
 
-        await finishCB(this.results, finishArgs);
+        await report.processResult(this.results, finishArgs);
     }
 
     /**

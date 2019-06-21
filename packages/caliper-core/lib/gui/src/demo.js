@@ -1,17 +1,26 @@
-/**
-* Copyright 2017 HUAWEI. All Rights Reserved.
-*
-* SPDX-License-Identifier: Apache-2.0
-*
-* @file Implementation of the temporary demo
-*/
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 
 'use strict';
 
 const logger = require('../../utils/caliper-utils').getLogger('demo.js');
-const path = require('path');
-const demoFile = path.join(__dirname, '../output/demo.json');
+const fs = require('fs-extra');
+const {join} = require('path');
+const demoPath = '/tmp/caliper/output';
+const demoFile = join(demoPath, 'demo.json');
+
 let demoInterval = 1;   // interval length(s)
 let demoXLen = 60;     // default x axis length
 let demoData;
@@ -21,7 +30,6 @@ let demoInterObj = null;
  * Demonstration
  */
 function demoInit() {
-    let fs = require('fs');
     demoData =  {
         maxlen : 300,
         throughput: {
@@ -48,6 +56,10 @@ function demoInit() {
     for(let i = 0 ; i < demoXLen ; i++) {
         demoData.throughput.x.push(i * demoInterval);
         demoData.latency.x.push(i * demoInterval);
+    }
+
+    if (!fs.existsSync(demoPath)) {
+        fs.mkdirpSync(demoPath);
     }
 
     fs.writeFileSync(demoFile,  JSON.stringify(demoData));
