@@ -10,9 +10,9 @@
         "url": "http://rarity.splunkdlt.com:8545",
         "contractDeployerAddress": "0x7418fe2b13dc319b411aB2Ee865D472A68F92503",
         "contractDeployerAddressPassword": "password",
-        "contractDeployerPrivateKeyFile": "network/splunk/eth-rarity/keys/UTC--2019-05-05T20-07-38.958128475Z--c0a8e4d217eb85b812aeb1226fab6f588943c2c2",
+        "contractDeployerPrivateKeyFile": "network/splunk/eth-rarity/remote-config/UTC--2019-05-05T20-07-38.958128475Z--c0a8e4d217eb85b812aeb1226fab6f588943c2c2",
         "fromAddressPassword": "password",
-        "fromAddressPrivateKeyFile": "network/splunk/eth-rarity/keys/fromAccounts",
+        "fromAddressPrivateKeyFile": "network/splunk/eth-rarity/remote-config/fromAccounts",
         "transactionConfirmationBlocks": 2,
         "registry": {
             "address": "0x5A5c6435875EAd9825139865B7A0e6F080da42A2",

@@ -132,4 +132,4 @@ createAccounts = async function (numAccounts, minEther, keyfile, parallelism) {
 }
 
 // deployRegistry();
-createAccounts(2000, "0.001", "keys/fromAccounts", 10)
+createAccounts(10, "0.001", "remote-config/test1", 1)

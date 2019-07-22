@@ -36,3 +36,7 @@ zookeeper.out
 .sass-cache/
 Gemfile.lock
 _site/
+
+# Ignore keys for remote config
+remote-config/
+!remote-config/.gitkeep

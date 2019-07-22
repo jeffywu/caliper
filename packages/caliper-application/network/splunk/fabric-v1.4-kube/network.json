@@ -1,0 +1,107 @@
+{
+  "caliper" : {
+    "blockchain": "fabric",
+    "command" : {
+      "start": "echo  'start'",
+      "end" : "echo 'end'"
+    }
+  },
+  "fabric": {
+    "cryptodir": "network/splunk/fabric-v1.4-kube/remote-config",
+    "network": {
+      "orderer": {
+        "url": "grpc://localhost:7050",
+        "mspid": "OrdererMSP",
+        "msp": "network/splunk/fabric-v1.4-kube/remote-config/ordererOrganizations/orderers.svc.cluster.localmsp/",
+        "server-hostname": "orderers.svc.cluster.local",
+        "tls_cacerts": "network/splunk/fabric-v1.4-kube/remote-config/ordererOrganizations/orderers.svc.cluster.local/msp/tlscacerts/tlsca.orderers.svc.cluster.local-cert.pem"
+      },
+      "splunk-peers": {
+        "name": "SplunkOrg",
+        "mspid": "SplunkMSP",
+        "domain": "splunk-peers.svc.cluster.local",
+        "msp": "network/splunk/fabric-v1.4-kube/remote-config/peerOrganizations/splunk-peers.svc.cluster.local/msp",
+        "ca": {
+          "url": "http://localhost:7054",
+          "name": "ca.org1.mydomain.com"
+        },
+        "peer0": {
+          "requests": "grpc://localhost:7051",
+          "events": "grpc://localhost:7053",
+          "server-hostname": "peer0.splunk-peers.svc.cluster.local",
+          "tls_cacerts": "network/splunk/fabric-v1.4-kube/remote-config/peerOrganizations/splunk-peers.svc.cluster.local/msp/tlscacerts/tlsca.splunk-peers.svc.cluster.local-cert.pem"
+        },
+        "peer1": {
+          "requests": "grpc://localhost:7057",
+          "events": "grpc://localhost:7059",
+          "server-hostname": "peer1.splunk-peers.svc.cluster.local",
+          "tls_cacerts": "network/splunk/fabric-v1.4-kube/remote-config/peerOrganizations/splunk-peers.svc.cluster.local/msp/tlscacerts/tlsca.splunk-peers.svc.cluster.local-cert.pem"
+        }
+      },
+      "buttercup-peers": {
+        "name": "ButtercupOrg",
+        "mspid": "ButtercupMSP",
+        "domain": "buttercup-peers.svc.cluster.local",
+        "msp": "network/splunk/fabric-v1.4-kube/remote-config/peerOrganizations/buttercup-peers.svc.cluster.local/msp",
+        "ca": {
+          "url": "http://localhost:8054",
+          "name": "ca.org6.mydomain.com"
+        },
+        "peer0": {
+          "requests": "grpc://localhost:8051",
+          "events": "grpc://localhost:8053",
+          "server-hostname": "peer0.buttercup-peers.svc.cluster.local",
+          "tls_cacerts": "network/splunk/fabric-v1.4-kube/remote-config/peerOrganizations/buttercup-peers.svc.cluster.local/msp/tlscacerts/tlsca.buttercup-peers.svc.cluster.local-cert.pem"
+        }
+      }
+    },
+    "channel": [
+      {
+        "name": "groupchannel",
+        "config": "network/splunk/fabric-v1.4-kube/remote-config/groupchannel.tx",
+        "organizations": ["splunk-peers", "buttercup-peers"],
+        "deployed": true
+      },
+      {
+        "name": "privatechannel",
+        "config": "network/splunk/fabric-v1.4-kube/remote-config/privatechannel.tx",
+        "organizations": ["buttercup-peers"],
+        "deployed": true
+      }
+    ],
+    "chaincodes": [],
+    "endorsement-policy": {
+      "identities": [
+        {
+          "role": {
+            "name": "member",
+            "mspId": "SplunkMSP"
+          }
+        },
+        {
+          "role": {
+            "name": "member",
+            "mspId": "ButtercupMSP"
+          }
+        },
+        {
+          "role": {
+            "name": "admin",
+            "mspId": "SplunkMSP"
+          }
+        }
+      ],
+      "policy": { "2-of": [{"signed-by": 0}, {"signed-by": 1}]}
+    },
+    "context": {
+      "smallOperations": "groupchannel",
+      "query": "groupchannel"
+    }
+  },
+  "info" : {
+    "Version": "1.4.0",
+    "Size": "2 Orgs with 2 Peers",
+    "Orderer": "Kafka",
+    "Distribution": "Kubernetes"
+  }
+}
