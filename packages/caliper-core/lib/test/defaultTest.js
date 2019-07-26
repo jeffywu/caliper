@@ -26,16 +26,17 @@ const path = require('path');
 class DefaultTest {
 
     /**
-    * load client(s) to do performance tests
-    * @param {Array} clientArgs arguments for clients
-    * @param {String} absNetworkFile the network config file patch
-    * @param {ClientOrchestrator} clientOrchestrator the client orchestrator
-    * @param {Object} clientFactory factory used to spawn test clients
-    * @param {String} networkRoot the root location
-    * @param {Report} report the report being built
-    * @param {Object} demo the demo UI component
-    */
-    constructor(clientArgs, absNetworkFile, clientOrchestrator, clientFactory, networkRoot, report, demo) {
+     * load client(s) to do performance tests
+     * @param {Array} clientArgs arguments for clients
+     * @param {String} absNetworkFile the network config file patch
+     * @param {ClientOrchestrator} clientOrchestrator the client orchestrator
+     * @param {Object} clientFactory factory used to spawn test clients
+     * @param {String} networkRoot the root location
+     * @param {Report} report the report being built
+     * @param {Object} demo the demo UI component
+     * @param {Object} monitor The monitor object
+     */
+    constructor(clientArgs, absNetworkFile, clientOrchestrator, clientFactory, networkRoot, report, demo, monitor) {
         this.clientArgs = clientArgs;
         this.absNetworkFile = absNetworkFile;
         this.clientFactory = clientFactory;
@@ -44,6 +45,7 @@ class DefaultTest {
         this.report = report;
         this.round = 0;
         this.demo = demo;
+        this.monitor = monitor;
     }
 
     /**
@@ -75,32 +77,6 @@ class DefaultTest {
             // condition for time based or number based test driving
             if (args.txNumber) {
                 msg.numb = testRounds[i];
-                // File information for reading or writing transaction request
-                msg.txFile = {roundLength: testRounds.length, roundCurrent: i, txMode: args.txMode};
-                if (args.txMode && args.txMode.type === 'file-write') {
-                    logger.info('------ Prepare(file-write) waiting ------');
-                    msg.txFile.readWrite = 'write';
-                    msg.rateControl = {type: 'fixed-rate', opts: {tps: 400}};
-                    try {
-                        await this.clientOrchestrator.startTest(msg, this.clientArgs, function(){}, testLabel, this.clientFactory);
-                        msg.numb = testRounds[i];
-                        msg.txFile.readWrite = 'read';
-                        msg.rateControl = args.rateControl[i] ? args.rateControl[i] : {type:'fixed-rate', 'opts' : {'tps': 1}};
-                        if(i === (testRounds.length - 1)) {
-                            logger.info('Waiting 5 seconds...');
-                            logger.info('------ Prepare(file-write) success------');
-                            await CaliperUtils.sleep(5000);
-                        }
-                    } catch (err) {
-                        logger.error('------Prepare(file-write) failed------');
-                        args.txMode.type = 'file-no';
-                    }
-
-                } else if(args.txMode && args.txMode.type === 'file-read'){
-                    msg.txFile.readWrite = 'read';
-                } else {
-                    msg.txFile.readWrite = 'no';
-                }
             } else if (args.txDuration) {
                 msg.txDuration = testRounds[i];
             } else {

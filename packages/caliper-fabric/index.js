@@ -16,4 +16,3 @@
 
 module.exports.AdminClient = require('./lib/fabric');
 module.exports.ClientFactory = require('./lib/fabricClientFactory');
-

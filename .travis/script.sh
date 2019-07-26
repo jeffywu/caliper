@@ -23,5 +23,15 @@ npm run bootstrap
 # Run linting and unit tests
 npm test
 
+echo "---- Publishing packages locally"
+cd ./packages/caliper-tests-integration/
+npm run cleanup
+npm run start_verdaccio
+npm run publish_packages
+
+echo "---- Installing CLI"
+npm run install_cli
+npm run cleanup
+
 echo "---- Running Integration test for adaptor ${BENCHMARK}"
-./packages/caliper-tests-integration/scripts/run-integration-tests.sh
+npm run run_tests
