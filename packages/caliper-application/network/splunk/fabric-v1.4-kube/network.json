@@ -69,7 +69,15 @@
         "deployed": true
       }
     ],
-    "chaincodes": [],
+    "chaincodes": [
+      { 
+        "id": "adi",
+        "path": "contract/fabric/adi",
+        "language": "golang",
+        "version": "v0",
+        "channel": "groupchannel"
+      }
+    ],
     "endorsement-policy": {
       "identities": [
         {
